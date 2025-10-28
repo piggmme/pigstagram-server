@@ -1,12 +1,73 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  password  String
+  username  String     @unique
+  name      String?
+  bio       String?
+  avatarUrl String?
+  posts     Post[]
+  comments  Comment[]
+  likes     Like[]
+  followers Follow[]   @relation("followers")
+  following Follow[]   @relation("following")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Post {
+  id        Int        @id @default(autoincrement())
+  authorId  Int
+  author    User       @relation(fields: [authorId], references: [id])
+  caption   String?
+  images    PostImage[]
+  likes     Like[]
+  comments  Comment[]
+  createdAt DateTime   @default(now())
+}
+
+model PostImage {
+  id        Int        @id @default(autoincrement())
+  postId    Int
+  url       String
+  post      Post       @relation(fields: [postId], references: [id])
+}
+
+model Like {
+  userId    Int
+  postId    Int
+  user      User @relation(fields: [userId], references: [id])
+  post      Post @relation(fields: [postId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  authorId  Int
+  content   String
+  post      Post     @relation(fields: [postId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  followerId Int
+  followingId Int
+  follower   User @relation("following", fields: [followerId], references: [id])
+  following  User @relation("followers", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+  @@unique([followerId, followingId])
 }
