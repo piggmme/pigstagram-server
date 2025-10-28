@@ -81,7 +81,8 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
-      "^prisma/(.*)$": "<rootDir>/../prisma/$1"
+      "^prisma/(.*)$": "<rootDir>/../prisma/$1",
+      "^generated/(.*)$": "<rootDir>/../generated/$1"
     }
   }
 }

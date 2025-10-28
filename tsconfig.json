@@ -13,6 +13,7 @@
     "paths": {
       "*": ["*"],
       "prisma/*": ["prisma/*"],
+      "generated/*": ["generated/*"],
       "src/*": ["src/*"]
     },
     "incremental": true,
