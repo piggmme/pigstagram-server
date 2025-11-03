@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -45,8 +44,6 @@ describe('UsersService', () => {
         name: 'A',
         password: '1234',
       };
-      const hashed = 'hashed_pw';
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashed as never);
       mockPrismaService.user.create.mockResolvedValue({
         id: 1,
         email: dto.email,
@@ -56,9 +53,8 @@ describe('UsersService', () => {
 
       const result = await service.create(dto);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 10);
       expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-        data: { ...dto, password: hashed },
+        data: dto,
         select: { id: true, email: true, username: true, name: true },
       });
       expect(result).toEqual({
