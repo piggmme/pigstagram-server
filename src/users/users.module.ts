@@ -6,5 +6,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Module({
   controllers: [UsersController],
   providers: [UsersService, PrismaService],
+  exports: [UsersService], // 다른 모듈에서 사용할 수 있도록 export
 })
 export class UsersModule {}
