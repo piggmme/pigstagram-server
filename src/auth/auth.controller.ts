@@ -1,19 +1,25 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   Res,
+  Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Post('signup')
   async signup(@Body() signUpDto: SignUpDto, @Res() res: Response) {
@@ -49,5 +55,32 @@ export class AuthController {
     // 쿠키 삭제
     res.clearCookie('access_token');
     return res.json({ message: '로그아웃 성공' });
+  }
+
+  /**
+   * 현재 로그인한 사용자 정보 확인
+   * 쿠키에서 토큰을 읽어서 사용자 정보를 반환
+   */
+  @Get('me')
+  getCurrentUser(@Req() req: Request) {
+    const token = (req.cookies as { access_token?: string })?.access_token;
+
+    if (!token) {
+      return { message: '로그인되지 않았습니다.', loggedIn: false };
+    }
+
+    try {
+      const payload: { sub: number; email: string } =
+        this.jwtService.verify(token);
+      return {
+        loggedIn: true,
+        user: {
+          id: payload.sub,
+          email: payload.email,
+        },
+      };
+    } catch {
+      return { message: '유효하지 않은 토큰입니다.', loggedIn: false };
+    }
   }
 }

@@ -20,3 +20,13 @@ Content-Type: application/json
 
 ### signout
 POST http://localhost:3008/auth/signout
+
+### 현재 로그인 상태 확인 (쿠키에서 토큰 읽기)
+GET http://localhost:3008/auth/me
+Cookie: access_token=your-token-here
+
+### 쿠키 확인 방법:
+### 1. 로그인 후 응답 헤더에서 Set-Cookie 확인
+### 2. 브라우저 개발자 도구 → Application → Cookies → http://localhost:3008
+### 3. 다음 요청에서 쿠키가 자동으로 전송됨 (브라우저의 경우)
+### 4. HTTP 클라이언트에서 Cookie 헤더로 수동 전송 가능
