@@ -1,0 +1,22 @@
+### signup
+POST http://localhost:3008/auth/signup
+Content-Type: application/json
+
+{
+  "email": "11050227@example.com",
+  "password": "password11050227",
+  "username": "user11050227",
+  "name": "name11050227"
+}
+
+### signin
+POST http://localhost:3008/auth/signin
+Content-Type: application/json
+
+{
+  "email": "11050227@example.com",
+  "password": "password11050227"
+}
+
+### signout
+POST http://localhost:3008/auth/signout

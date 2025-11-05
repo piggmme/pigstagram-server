@@ -3,17 +3,17 @@ POST http://localhost:3008/users
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "password",
-  "username": "piggmme",
-  "name": "Hee"
+  "email": "11050225@example.com",
+  "password": "password11050225",
+  "username": "user11050225",
+  "name": "name11050225"
 }
 
 ### Get all users
 GET http://localhost:3008/users
 
 ### Get a user by id
-GET http://localhost:3008/users/1
+GET http://localhost:3008/users/3
 
 ### Update a user by id
 PATCH http://localhost:3008/users/1
