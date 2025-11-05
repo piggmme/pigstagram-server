@@ -106,7 +106,7 @@ describe('AuthController', () => {
       );
       expect(mockResponse.json).toHaveBeenCalledWith({
         user: serviceResult.user,
-        message: '로그인 성공',
+        message: 'Sign in successful',
       });
     });
   });
@@ -117,7 +117,7 @@ describe('AuthController', () => {
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('access_token');
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: '로그아웃 성공',
+        message: 'Sign out successful',
       });
     });
   });

@@ -55,7 +55,9 @@ export class UsersService {
         avatarUrl: true,
       },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 

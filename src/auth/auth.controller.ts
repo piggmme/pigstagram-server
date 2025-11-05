@@ -14,6 +14,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { AuthGuard } from './guards/auth/auth.guard';
 import { GetUser } from './decorators/get-user/get-user.decorator';
+import { RequestUser } from './types/jwt-payload.type';
 
 @Controller('auth')
 export class AuthController {
@@ -43,7 +44,7 @@ export class AuthController {
 
     return res.json({
       user: result.user,
-      message: '로그인 성공',
+      message: 'Sign in successful',
     });
   }
 
@@ -52,7 +53,7 @@ export class AuthController {
   signOut(@Res({ passthrough: true }) res: Response) {
     // 쿠키 삭제
     res.clearCookie('access_token');
-    return res.json({ message: '로그아웃 성공' });
+    return res.json({ message: 'Sign out successful' });
   }
 
   /**
@@ -61,7 +62,7 @@ export class AuthController {
    */
   @Get('me')
   @UseGuards(AuthGuard)
-  getCurrentUser(@GetUser() user: { sub: number; email: string }) {
+  getCurrentUser(@GetUser() user: RequestUser) {
     return {
       loggedIn: true,
       user: {

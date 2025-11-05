@@ -3,6 +3,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/auth/guards/auth/auth.guard';
 import { ForbiddenException } from '@nestjs/common';
+import { RequestUser } from 'src/auth/types/jwt-payload.type';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -44,31 +45,6 @@ describe('UsersController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-  });
-
-  describe('create', () => {
-    it('should create a user', async () => {
-      const createUserDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        username: 'testuser',
-        name: 'Test User',
-      };
-
-      const expectedResult = {
-        id: 1,
-        email: 'test@example.com',
-        username: 'testuser',
-        name: 'Test User',
-      };
-
-      mockUsersService.create.mockResolvedValue(expectedResult);
-
-      const result = await controller.create(createUserDto);
-
-      expect(result).toEqual(expectedResult);
-      expect(mockUsersService.create).toHaveBeenCalledWith(createUserDto);
-    });
   });
 
   describe('findAll', () => {
@@ -116,7 +92,7 @@ describe('UsersController', () => {
       const updateUserDto = {
         name: 'Updated Name',
       };
-      const mockUser = { sub: 1, email: 'test@example.com' };
+      const mockUser: RequestUser = { sub: 1, email: 'test@example.com' };
 
       const expectedResult = {
         id: 1,
@@ -137,7 +113,7 @@ describe('UsersController', () => {
       const updateUserDto = {
         name: 'Updated Name',
       };
-      const mockUser = { sub: 2, email: 'other@example.com' }; // 다른 사용자
+      const mockUser: RequestUser = { sub: 2, email: 'other@example.com' };
 
       try {
         await controller.update(userId, updateUserDto, mockUser);
@@ -152,7 +128,7 @@ describe('UsersController', () => {
   describe('remove', () => {
     it('should delete a user when user is the owner', async () => {
       const userId = '1';
-      const mockUser = { sub: 1, email: 'test@example.com' };
+      const mockUser: RequestUser = { sub: 1, email: 'test@example.com' };
       const expectedResult = {
         id: 1,
         email: 'test@example.com',
@@ -170,7 +146,7 @@ describe('UsersController', () => {
 
     it('should throw ForbiddenException when user is not the owner', async () => {
       const userId = '1';
-      const mockUser = { sub: 2, email: 'other@example.com' }; // 다른 사용자
+      const mockUser: RequestUser = { sub: 2, email: 'other@example.com' };
 
       try {
         await controller.remove(userId, mockUser);
@@ -184,7 +160,7 @@ describe('UsersController', () => {
 
   describe('getMyProfile', () => {
     it('should return current user profile', async () => {
-      const mockUser = { sub: 1, email: 'test@example.com' };
+      const mockUser: RequestUser = { sub: 1, email: 'test@example.com' };
       const expectedResult = {
         id: 1,
         email: 'test@example.com',

@@ -1,4 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { RequestUser } from '../../types/jwt-payload.type';
 
 /**
  * Request 객체에서 사용자 정보를 추출하는 데코레이터
@@ -7,13 +8,13 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * @example
  * @Get('profile')
  * @UseGuards(AuthGuard)
- * getProfile(@GetUser() user: { sub: number; email: string }) {
+ * getProfile(@GetUser() user: RequestUser) {
  *   return this.usersService.findOne(user.sub);
  * }
  */
 export const GetUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
+  (data: unknown, ctx: ExecutionContext): RequestUser | undefined => {
     const request = ctx.switchToHttp().getRequest();
-    return (request as { user?: { sub: number; email: string } }).user;
+    return (request as { user?: RequestUser }).user;
   },
 );
