@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { AuthGuard } from 'src/auth/guards/auth/auth.guard';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -13,7 +15,13 @@ describe('UsersController', () => {
     remove: jest.fn(),
   };
 
+  const mockAuthGuard = {
+    canActivate: jest.fn(() => true),
+  };
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
@@ -21,8 +29,15 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        {
+          provide: AuthGuard,
+          useValue: mockAuthGuard,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
   });
@@ -96,11 +111,12 @@ describe('UsersController', () => {
   });
 
   describe('update', () => {
-    it('should update a user', async () => {
+    it('should update a user when user is the owner', async () => {
       const userId = '1';
       const updateUserDto = {
         name: 'Updated Name',
       };
+      const mockUser = { sub: 1, email: 'test@example.com' };
 
       const expectedResult = {
         id: 1,
@@ -110,16 +126,33 @@ describe('UsersController', () => {
 
       mockUsersService.update.mockResolvedValue(expectedResult);
 
-      const result = await controller.update(userId, updateUserDto);
+      const result = await controller.update(userId, updateUserDto, mockUser);
 
       expect(result).toEqual(expectedResult);
       expect(mockUsersService.update).toHaveBeenCalledWith(1, updateUserDto);
     });
+
+    it('should throw ForbiddenException when user is not the owner', async () => {
+      const userId = '1';
+      const updateUserDto = {
+        name: 'Updated Name',
+      };
+      const mockUser = { sub: 2, email: 'other@example.com' }; // 다른 사용자
+
+      try {
+        await controller.update(userId, updateUserDto, mockUser);
+        fail('Expected ForbiddenException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(mockUsersService.update).not.toHaveBeenCalled();
+      }
+    });
   });
 
   describe('remove', () => {
-    it('should delete a user', async () => {
+    it('should delete a user when user is the owner', async () => {
       const userId = '1';
+      const mockUser = { sub: 1, email: 'test@example.com' };
       const expectedResult = {
         id: 1,
         email: 'test@example.com',
@@ -129,10 +162,44 @@ describe('UsersController', () => {
 
       mockUsersService.remove.mockResolvedValue(expectedResult);
 
-      const result = await controller.remove(userId);
+      const result = await controller.remove(userId, mockUser);
 
       expect(result).toEqual(expectedResult);
       expect(mockUsersService.remove).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw ForbiddenException when user is not the owner', async () => {
+      const userId = '1';
+      const mockUser = { sub: 2, email: 'other@example.com' }; // 다른 사용자
+
+      try {
+        await controller.remove(userId, mockUser);
+        fail('Expected ForbiddenException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(mockUsersService.remove).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('getMyProfile', () => {
+    it('should return current user profile', async () => {
+      const mockUser = { sub: 1, email: 'test@example.com' };
+      const expectedResult = {
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+        name: 'Test User',
+        bio: null,
+        avatarUrl: null,
+      };
+
+      mockUsersService.findOne.mockResolvedValue(expectedResult);
+
+      const result = await controller.getMyProfile(mockUser);
+
+      expect(result).toEqual(expectedResult);
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(1);
     });
   });
 });
