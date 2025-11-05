@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -15,6 +16,10 @@ describe('AuthService', () => {
     create: jest.fn(),
   };
 
+  const mockJwtService = {
+    sign: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -24,6 +29,10 @@ describe('AuthService', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
         },
       ],
     }).compile();
@@ -129,7 +138,7 @@ describe('AuthService', () => {
   });
 
   describe('signIn', () => {
-    it('should return user when credentials are valid', async () => {
+    it('should return access token and user when credentials are valid', async () => {
       const signInDto = {
         email: 'test@example.com',
         password: 'password123',
@@ -140,21 +149,30 @@ describe('AuthService', () => {
       const hash = (await scrypt(signInDto.password, salt, 32)) as Buffer;
       const hashedPassword = salt + '.' + hash.toString('hex');
 
-      mockUsersService.findByEmail.mockResolvedValue({
+      const mockUser = {
         id: 1,
         email: signInDto.email,
         password: hashedPassword,
-      });
+      };
+
+      mockUsersService.findByEmail.mockResolvedValue(mockUser);
+      mockJwtService.sign.mockReturnValue('mock-access-token');
 
       const result = await service.signIn(signInDto);
 
       expect(mockUsersService.findByEmail).toHaveBeenCalledWith(
         signInDto.email,
       );
+      expect(mockJwtService.sign).toHaveBeenCalledWith({
+        sub: mockUser.id,
+        email: mockUser.email,
+      });
       expect(result).toEqual({
-        id: 1,
-        email: signInDto.email,
-        password: hashedPassword,
+        accessToken: 'mock-access-token',
+        user: {
+          id: 1,
+          email: signInDto.email,
+        },
       });
     });
 

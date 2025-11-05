@@ -1,15 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { Response } from 'express';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: AuthService;
 
   const mockAuthService = {
     signUp: jest.fn(),
     signIn: jest.fn(),
   };
+
+  const mockResponse = {
+    status: jest.fn(() => mockResponse),
+    json: jest.fn(() => mockResponse),
+    cookie: jest.fn(() => mockResponse),
+    clearCookie: jest.fn(() => mockResponse),
+  } as unknown as Response;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -25,7 +32,6 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    authService = module.get<AuthService>(AuthService);
   });
 
   it('should be defined', () => {
@@ -33,7 +39,7 @@ describe('AuthController', () => {
   });
 
   describe('signup', () => {
-    it('should call authService.signUp with signUpDto', async () => {
+    it('should call authService.signUp and return user with 201 status', async () => {
       const signUpDto = {
         email: 'test@example.com',
         password: 'password123',
@@ -50,34 +56,60 @@ describe('AuthController', () => {
 
       mockAuthService.signUp.mockResolvedValue(expectedResult);
 
-      const result = await controller.signup(signUpDto);
+      await controller.signup(signUpDto, mockResponse);
 
       expect(mockAuthService.signUp).toHaveBeenCalledWith(signUpDto);
       expect(mockAuthService.signUp).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(expectedResult);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.json).toHaveBeenCalledWith(expectedResult);
     });
   });
 
   describe('signIn', () => {
-    it('should call authService.signIn with signInDto', async () => {
+    it('should call authService.signIn, set cookie and return user', async () => {
       const signInDto = {
         email: 'test@example.com',
         password: 'password123',
       };
 
-      const expectedResult = {
-        id: 1,
-        email: 'test@example.com',
-        password: 'hashed',
+      const serviceResult = {
+        accessToken: 'mock-token',
+        user: {
+          id: 1,
+          email: 'test@example.com',
+        },
       };
 
-      mockAuthService.signIn.mockResolvedValue(expectedResult);
+      mockAuthService.signIn.mockResolvedValue(serviceResult);
 
-      const result = await controller.signIn(signInDto);
+      await controller.signIn(signInDto, mockResponse);
 
       expect(mockAuthService.signIn).toHaveBeenCalledWith(signInDto);
       expect(mockAuthService.signIn).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(expectedResult);
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'mock-token',
+        expect.objectContaining({
+          httpOnly: true,
+          secure: false,
+          sameSite: 'strict',
+        }),
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        user: serviceResult.user,
+        message: '로그인 성공',
+      });
+    });
+  });
+
+  describe('signOut', () => {
+    it('should clear access_token cookie and return success message', () => {
+      controller.signOut(mockResponse);
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith('access_token');
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: '로그아웃 성공',
+      });
     });
   });
 });
