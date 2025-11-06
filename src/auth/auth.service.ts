@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  Inject,
+  forwardRef,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +18,7 @@ const scrypt = promisify(_scrypt);
 @Injectable()
 export class AuthService {
   constructor(
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
@@ -47,7 +50,7 @@ export class AuthService {
 
   async signIn(signInDto: SignInDto) {
     const user = await this.usersService.findByEmail(signInDto.email);
-    
+
     // 보안을 위해 사용자 존재 여부와 비밀번호 불일치를 구분하지 않음
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
