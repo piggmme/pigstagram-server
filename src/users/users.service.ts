@@ -7,7 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
+  create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: createUserDto,
       select: {
@@ -32,7 +32,7 @@ export class UsersService {
     });
   }
 
-  async findByEmail(email: string) {
+  findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
       select: {

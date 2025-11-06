@@ -27,7 +27,7 @@ export class UsersController {
   @Get(':id')
   @UseGuards(AuthGuard)
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+    return this.usersService.findOne(Number(id));
   }
 
   @Patch(':id')
@@ -38,20 +38,20 @@ export class UsersController {
     @GetUser() user: RequestUser,
   ) {
     // Only allow users to update their own information
-    if (+id !== user.sub) {
+    if (Number(id) !== user.sub) {
       throw new ForbiddenException('You can only update your own information');
     }
-    return this.usersService.update(+id, updateUserDto);
+    return this.usersService.update(Number(id), updateUserDto);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard)
   remove(@Param('id') id: string, @GetUser() user: RequestUser) {
     // Only allow users to delete their own account
-    if (+id !== user.sub) {
+    if (Number(id) !== user.sub) {
       throw new ForbiddenException('You can only delete your own account');
     }
-    return this.usersService.remove(+id);
+    return this.usersService.remove(Number(id));
   }
 
   /**
