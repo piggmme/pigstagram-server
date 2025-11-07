@@ -18,8 +18,8 @@ const scrypt = promisify(_scrypt);
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(forwardRef(() => UsersService))
-    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => UsersService)) // 인스턴스 주입
+    private readonly usersService: UsersService, // 주입값을 보관할 프로퍼티
     private readonly jwtService: JwtService,
   ) {}
 
