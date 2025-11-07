@@ -57,7 +57,7 @@ describe('PostsService', () => {
     jest.clearAllMocks();
   });
 
-  it('create는 이미지와 함께 게시글을 생성한다', async () => {
+  it('creates a post with images', async () => {
     const dto = { caption: 'hello', images: ['a.jpg', 'b.jpg'] };
     const expectedPost = { id: 1 };
     prisma.post.create.mockResolvedValue(expectedPost);
@@ -77,7 +77,7 @@ describe('PostsService', () => {
     expect(result).toBe(expectedPost);
   });
 
-  it('findFeed는 팔로우 유저와 본인 게시글을 조회한다', async () => {
+  it('retrieves feed posts for following users and self', async () => {
     const feed = [{ id: 1 }];
     prisma.follow.findMany.mockResolvedValue([{ followingId: 2 }]);
     prisma.post.findMany.mockResolvedValue(feed);
@@ -101,13 +101,13 @@ describe('PostsService', () => {
     expect(result).toBe(feed);
   });
 
-  it('findOne은 게시글을 찾지 못하면 예외를 던진다', async () => {
+  it('throws if a post is not found', async () => {
     prisma.post.findUnique.mockResolvedValue(null);
 
     await expect(service.findOne(1)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('findOne은 게시글을 반환한다', async () => {
+  it('returns a post when found', async () => {
     const post = { id: 1 };
     prisma.post.findUnique.mockResolvedValue(post);
 
@@ -127,7 +127,7 @@ describe('PostsService', () => {
     expect(result).toBe(post);
   });
 
-  it('update는 작성자가 아닌 경우 예외를 던진다', async () => {
+  it('throws if a non-author attempts to update', async () => {
     prisma.post.findUnique.mockResolvedValue({
       id: 1,
       authorId: 20,
@@ -139,7 +139,7 @@ describe('PostsService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('update는 이미지와 캡션을 업데이트한다', async () => {
+  it('updates images and caption for the author', async () => {
     const dto = { caption: 'new', images: ['x.jpg'] };
     const existing = {
       id: 1,
@@ -171,7 +171,7 @@ describe('PostsService', () => {
     expect(result).toBe(updated);
   });
 
-  it('delete는 게시글 존재 여부와 작성자를 확인한다', async () => {
+  it('deletes a post after verifying author', async () => {
     prisma.post.findUnique.mockResolvedValue({
       id: 1,
       authorId: 10,
@@ -184,7 +184,7 @@ describe('PostsService', () => {
     expect(result).toEqual({ message: 'Post deleted' });
   });
 
-  it('delete는 작성자가 아니면 예외를 던진다', async () => {
+  it('throws if a non-author attempts to delete', async () => {
     prisma.post.findUnique.mockResolvedValue({
       id: 1,
       authorId: 20,

@@ -49,7 +49,7 @@ describe('PostsController', () => {
     jest.clearAllMocks();
   });
 
-  it('create는 요청 유저와 DTO로 게시글을 생성한다', async () => {
+  it('creates a post using the request user and DTO', async () => {
     const dto: CreatePostDto = { caption: 'hi', images: ['a.jpg'] };
     const user: RequestUser = { sub: 1, email: 'user@example.com' };
     const expected = { id: 1 };
@@ -61,7 +61,7 @@ describe('PostsController', () => {
     expect(result).toBe(expected);
   });
 
-  it('findFeed는 유저 피드를 반환한다', async () => {
+  it('returns the feed for the authenticated user', async () => {
     const user: RequestUser = { sub: 2, email: 'user@example.com' };
     const feed = [{ id: 1 }];
     postsService.findFeed.mockResolvedValue(feed);
@@ -72,7 +72,7 @@ describe('PostsController', () => {
     expect(result).toBe(feed);
   });
 
-  it('findByUser는 전달된 userId로 게시글을 찾는다', async () => {
+  it('finds posts for the supplied userId', async () => {
     const posts = [{ id: 1 }];
     postsService.findByUser.mockResolvedValue(posts);
 
@@ -82,7 +82,7 @@ describe('PostsController', () => {
     expect(result).toBe(posts);
   });
 
-  it('findOne은 게시글을 반환한다', async () => {
+  it('returns a single post by id', async () => {
     const post = { id: 4 };
     postsService.findOne.mockResolvedValue(post);
 
@@ -92,7 +92,7 @@ describe('PostsController', () => {
     expect(result).toBe(post);
   });
 
-  it('update는 게시글을 수정한다', async () => {
+  it('updates a post for the owner', async () => {
     const user: RequestUser = { sub: 5, email: 'user@example.com' };
     const dto: UpdatePostDto = { caption: 'updated' };
     const updated = { id: 6 };
@@ -104,7 +104,7 @@ describe('PostsController', () => {
     expect(result).toBe(updated);
   });
 
-  it('remove는 게시글을 삭제한다', async () => {
+  it('removes a post for the owner', async () => {
     const user: RequestUser = { sub: 7, email: 'user@example.com' };
     const response = { message: 'Post deleted' };
     postsService.delete.mockResolvedValue(response);
