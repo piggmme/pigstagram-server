@@ -13,4 +13,10 @@ export class CreateUserDto {
 
   @IsString()
   name?: string;
+
+  @IsString()
+  bio?: string;
+
+  @IsString()
+  avatarUrl?: string;
 }

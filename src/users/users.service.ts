@@ -15,6 +15,10 @@ export class UsersService {
         email: true,
         username: true,
         name: true,
+        bio: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -28,6 +32,8 @@ export class UsersService {
         name: true,
         bio: true,
         avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -39,6 +45,8 @@ export class UsersService {
         id: true,
         email: true,
         password: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -53,6 +61,8 @@ export class UsersService {
         name: true,
         bio: true,
         avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
     if (!user) {
@@ -71,6 +81,8 @@ export class UsersService {
         name: true,
         bio: true,
         avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
