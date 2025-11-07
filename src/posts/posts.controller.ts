@@ -25,7 +25,7 @@ export class PostsController {
     return this.postsService.create(user.sub, createPostDto);
   }
 
-  @Get()
+  @Get('feed')
   @UseGuards(AuthGuard)
   findFeed(@GetUser() user: RequestUser) {
     return this.postsService.findFeed(user.sub);
