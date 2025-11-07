@@ -1,18 +1,197 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsService } from './posts.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('PostsService', () => {
   let service: PostsService;
+  let prisma: {
+    post: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    follow: {
+      findMany: jest.Mock;
+    };
+    postImage: {
+      deleteMany: jest.Mock;
+      createMany: jest.Mock;
+    };
+  };
 
   beforeEach(async () => {
+    prisma = {
+      post: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      follow: {
+        findMany: jest.fn(),
+      },
+      postImage: {
+        deleteMany: jest.fn(),
+        createMany: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PostsService],
+      providers: [
+        PostsService,
+        {
+          provide: PrismaService,
+          useValue: prisma,
+        },
+      ],
     }).compile();
 
     service = module.get<PostsService>(PostsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('create는 이미지와 함께 게시글을 생성한다', async () => {
+    const dto = { caption: 'hello', images: ['a.jpg', 'b.jpg'] };
+    const expectedPost = { id: 1 };
+    prisma.post.create.mockResolvedValue(expectedPost);
+
+    const result = await service.create(10, dto);
+
+    expect(prisma.post.create).toHaveBeenCalledWith({
+      data: {
+        caption: dto.caption,
+        authorId: 10,
+        images: {
+          create: dto.images.map((url) => ({ url })),
+        },
+      },
+      include: { images: true },
+    });
+    expect(result).toBe(expectedPost);
+  });
+
+  it('findFeed는 팔로우 유저와 본인 게시글을 조회한다', async () => {
+    const feed = [{ id: 1 }];
+    prisma.follow.findMany.mockResolvedValue([{ followingId: 2 }]);
+    prisma.post.findMany.mockResolvedValue(feed);
+
+    const result = await service.findFeed(1);
+
+    expect(prisma.follow.findMany).toHaveBeenCalledWith({
+      where: { followerId: 1 },
+      select: { followingId: true },
+    });
+    expect(prisma.post.findMany).toHaveBeenCalledWith({
+      where: { authorId: { in: [2, 1] } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: { select: { id: true, username: true, avatarUrl: true } },
+        images: true,
+        likes: true,
+        comments: true,
+      },
+    });
+    expect(result).toBe(feed);
+  });
+
+  it('findOne은 게시글을 찾지 못하면 예외를 던진다', async () => {
+    prisma.post.findUnique.mockResolvedValue(null);
+
+    await expect(service.findOne(1)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('findOne은 게시글을 반환한다', async () => {
+    const post = { id: 1 };
+    prisma.post.findUnique.mockResolvedValue(post);
+
+    const result = await service.findOne(1);
+
+    expect(prisma.post.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+      include: {
+        author: { select: { id: true, username: true, avatarUrl: true } },
+        images: true,
+        comments: {
+          include: { author: { select: { id: true, username: true } } },
+        },
+        likes: true,
+      },
+    });
+    expect(result).toBe(post);
+  });
+
+  it('update는 작성자가 아닌 경우 예외를 던진다', async () => {
+    prisma.post.findUnique.mockResolvedValue({
+      id: 1,
+      authorId: 20,
+      images: [],
+    });
+
+    await expect(
+      service.update(1, 10, { caption: 'hi', images: [] }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('update는 이미지와 캡션을 업데이트한다', async () => {
+    const dto = { caption: 'new', images: ['x.jpg'] };
+    const existing = {
+      id: 1,
+      authorId: 10,
+      images: [{ id: 1, url: 'old.jpg' }],
+    };
+    const updated = {
+      ...existing,
+      caption: dto.caption,
+      images: [{ id: 2, url: 'x.jpg' }],
+    };
+
+    prisma.post.findUnique.mockResolvedValue(existing);
+    prisma.post.update.mockResolvedValue(updated);
+
+    const result = await service.update(1, 10, dto);
+
+    expect(prisma.postImage.deleteMany).toHaveBeenCalledWith({
+      where: { postId: 1 },
+    });
+    expect(prisma.postImage.createMany).toHaveBeenCalledWith({
+      data: dto.images.map((url) => ({ postId: 1, url })),
+    });
+    expect(prisma.post.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { caption: dto.caption },
+      include: { images: true },
+    });
+    expect(result).toBe(updated);
+  });
+
+  it('delete는 게시글 존재 여부와 작성자를 확인한다', async () => {
+    prisma.post.findUnique.mockResolvedValue({
+      id: 1,
+      authorId: 10,
+    });
+    prisma.post.delete.mockResolvedValue(undefined);
+
+    const result = await service.delete(1, 10);
+
+    expect(prisma.post.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(result).toEqual({ message: 'Post deleted' });
+  });
+
+  it('delete는 작성자가 아니면 예외를 던진다', async () => {
+    prisma.post.findUnique.mockResolvedValue({
+      id: 1,
+      authorId: 20,
+    });
+
+    await expect(service.delete(1, 10)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 });
